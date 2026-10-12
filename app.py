@@ -141,4 +141,4 @@ if analyse_clicked:
           )
 else:
   with results_container:
-    st.hint("Sentiment analysis results will appear here when you click Analyse.")
+    st.text("Sentiment analysis results will appear here when you click Analyse.")
