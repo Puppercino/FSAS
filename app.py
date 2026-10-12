@@ -1,4 +1,6 @@
 import os
+import gc
+import json
 import streamlit as st
 import torch
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
@@ -35,14 +37,38 @@ if "model" not in st.session_state:
 if "tokenizer" not in st.session_state:
   st.session_state.tokenizer = None
 
+def read_model_info(model_id):
+  """Reads a model's manifest to be shown in the UI."""
+  manifest_path = os.path.join(MODELS_DIR, model_id, "manifest.json")
+  manifest = {}
+  try:
+    with open(manifest_path, 'r', encoding='utf-8') as file:
+      data = json.load(file)
+      manifest["name"] = data["name"]
+      manifest["description"] = data["description"]
+  except:
+    print("The model's manifest may be missing or invalid. The model will still work, but detailed information about the model won't be available.")
+    manifest["name"] = model_id
+    manifest["description"] = "No description available."
+  
+  return manifest
 
-@st.cache_resource
 def load_model_and_tokenizer(model_path):
-  """Caches and loads the model and tokenizer."""
+  """Load a model and tokenizer."""
   tokenizer = AutoTokenizer.from_pretrained(model_path)
   model = AutoModelForSequenceClassification.from_pretrained(model_path)
   model.eval()  # Set to evaluation mode
   return model, tokenizer
+
+
+def unload_model():
+  """Release the current model and tokenizer from RAM."""
+  st.session_state.model = None
+  st.session_state.tokenizer = None
+  st.session_state.loaded_model_name = None
+  gc.collect()
+  if torch.cuda.is_available():
+    torch.cuda.empty_cache()
 
 
 # Model Selection Menu
@@ -63,14 +89,21 @@ with modelSelectCol:
   )
 
 with startButtonCol:
-  load_clicked = st.button("Start Model", help="Loads selected model into memory.", width="stretch", icon=":material/play_arrow:")
+  load_clicked = st.button("Load Model", help="Loads selected model into memory.", width="stretch", icon=":material/play_arrow:")
   
 with stopButtonCol:
-  unload_clicked = st.button("Stop Model", help="Unloads model and frees memory.", width="stretch", icon=":material/stop:")
+  unload_clicked = st.button("Unload Model", help="Unloads model and frees memory.", width="stretch", icon=":material/stop:")
   
 with st.container():
+  if selected_model_folder:
+    selected_model_manifest = read_model_info(selected_model_folder)
+    st.markdown(
+        f"### {selected_model_manifest['name']}\n"
+        f"{selected_model_manifest['description']}"
+    )
+
   if st.session_state.loaded_model_name:
-    st.success(f"Now running: `{st.session_state.loaded_model_name}`")
+    st.success(f"Loaded model: `{st.session_state.loaded_model_name}`")
   else:
     st.warning("No model currently loaded.")
 
@@ -78,6 +111,9 @@ with st.container():
 if load_clicked and selected_model_folder:
   model_path = os.path.join(MODELS_DIR, selected_model_folder)
   try:
+    # Avoid keeping the previous model alive while loading its replacement.
+    if st.session_state.model is not None:
+      unload_model()
     with st.spinner(f"Loading {selected_model_folder}..."):
       st.session_state.model, st.session_state.tokenizer = (
           load_model_and_tokenizer(model_path)
@@ -89,9 +125,7 @@ if load_clicked and selected_model_folder:
 
 # Free the model from memory.
 if unload_clicked:
-  st.session_state.model = None
-  st.session_state.tokenizer = None
-  st.session_state.loaded_model_name = None
+  unload_model()
   st.rerun()
 
 st.markdown("---")
