@@ -1,0 +1,4 @@
+{
+    "name": "BERT (Mixed, Weighted)",
+    "description": "Like BERT (Mixed), this model is trained on source and target in one run, but uses dataset weighting (oversampled by x3) for transfer learning."
+}

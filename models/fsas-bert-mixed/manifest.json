@@ -1,0 +1,4 @@
+{
+    "name": "BERT (Mixed)",
+    "description": "Trained on both source and target datasets in one run."
+}

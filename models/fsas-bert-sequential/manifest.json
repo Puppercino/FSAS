@@ -1,0 +1,4 @@
+{
+    "name": "BERT (Sequential)",
+    "description": "Trained on a source dataset, then fine-tuned on a target dataset using transfer learning."
+}
