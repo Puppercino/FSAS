@@ -4,6 +4,7 @@ numpy
 pandas
 transformers
 torch
+torchvision
 accelerate
 safetensors
 matplotlib

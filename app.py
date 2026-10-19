@@ -72,28 +72,12 @@ def unload_model():
 
 
 # Model Selection Menu
-modelSelectCol, startButtonCol, stopButtonCol = st.columns([3, 1, 1], vertical_alignment="center")
+selected_model_folder = st.selectbox(
+    "Model",
+    options=available_models,
+    disabled=not available_models,
+)
 
-with modelSelectCol:
-  selected_model_folder = st.selectbox(
-      "Model",
-      options=available_models,
-      index=(
-          available_models.index(st.session_state.loaded_model_name)
-          if st.session_state.loaded_model_name in available_models
-          else 0
-      )
-      if available_models
-      else 0,
-      disabled=not available_models,
-  )
-
-with startButtonCol:
-  load_clicked = st.button("Load Model", help="Loads selected model into memory.", width="stretch", icon=":material/play_arrow:")
-  
-with stopButtonCol:
-  unload_clicked = st.button("Unload Model", help="Unloads model and frees memory.", width="stretch", icon=":material/stop:")
-  
 with st.container():
   if selected_model_folder:
     selected_model_manifest = read_model_info(selected_model_folder)
@@ -102,31 +86,25 @@ with st.container():
         f"{selected_model_manifest['description']}"
     )
 
+    if st.session_state.loaded_model_name != selected_model_folder:
+      model_path = os.path.join(MODELS_DIR, selected_model_folder)
+      # avoid wasting memory on unused models
+      unload_model()
+      try:
+        with st.spinner(f"Loading {selected_model_folder}..."):
+          st.session_state.model, st.session_state.tokenizer = (
+              load_model_and_tokenizer(model_path)
+          )
+          st.session_state.loaded_model_name = selected_model_folder
+      except Exception as e:
+        st.error(f"Failed to load model: {e}")
+  elif st.session_state.model is not None:
+    unload_model()
+
   if st.session_state.loaded_model_name:
     st.success(f"Loaded model: `{st.session_state.loaded_model_name}`")
   else:
     st.warning("No model currently loaded.")
-
-# Handle Load Action
-if load_clicked and selected_model_folder:
-  model_path = os.path.join(MODELS_DIR, selected_model_folder)
-  try:
-    # Avoid keeping the previous model alive while loading its replacement.
-    if st.session_state.model is not None:
-      unload_model()
-    with st.spinner(f"Loading {selected_model_folder}..."):
-      st.session_state.model, st.session_state.tokenizer = (
-          load_model_and_tokenizer(model_path)
-      )
-      st.session_state.loaded_model_name = selected_model_folder
-    st.rerun()
-  except Exception as e:
-    st.error(f"Failed to load model: {e}")
-
-# Free the model from memory.
-if unload_clicked:
-  unload_model()
-  st.rerun()
 
 st.markdown("---")
 
@@ -146,7 +124,7 @@ results_container = st.container(border=True)
 if analyse_clicked:
   if not st.session_state.model:
     with results_container:
-      st.error("Please select a model and click Start Model first.")
+      st.error("Please select a model first.")
   elif not text_input.strip():
     with results_container:
       st.warning("Please enter some text to analyse.")
