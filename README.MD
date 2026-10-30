@@ -1,10 +1,9 @@
-# 🎭 Domain-Adaptive Sentiment & Emotion Analysis
-
-**COS60011 – Technology Design Project · Swinburne University of Technology**
+# Domain-Adaptive Sentiment & Emotion Analysis
+### COS60011 – Technology Design Project · Swinburne University of Technology
 
 A team project investigating how well emotion classifiers trained on general short-form text **transfer** to a different domain — first-person emotional narratives (ISEAR). This repository contains the live **Streamlit demo** and the full **experiment notebook**.
 
-🔗 **Live demo:** https://emotion-classifier-tscy6dtzkxubyoxxtruykw.streamlit.app/
+**Live demo:** https://qctpbztqdudwx3ka6qqsyt.streamlit.app/ 
 
 ---
 
@@ -14,7 +13,11 @@ Type a short, first-person description of a situation and the model predicts the
 
 > Example: *"I was walking home alone at night when I heard footsteps behind me."* → **fear**
 
-The deployed demo uses a lightweight **TF-IDF + Logistic Regression** model trained on ISEAR so it runs quickly on the free Streamlit tier. The stronger BERT and LLM experiments are in the notebook.
+The deployed demo offers a selection of models trained using BERT, specifically: 
+- `fsas-bert-domain`: Trained only on the target dataset.
+- `fsas-bert-mixed`: Trained on both source and target datasets in one run.
+- `fsas-bert-mixed-weighted`: Like BERT (Mixed), this model is trained on source and target in one run, but uses dataset weighting (oversampled by x3) for transfer learning.
+- `fsas-bert-sequential`: Trained on a source dataset, then fine-tuned on a target dataset using transfer learning.
 
 ---
 
@@ -122,8 +125,9 @@ Open `project_notebook_v2.ipynb` in Google Colab, switch to a **T4 GPU** runtime
 
 | Name | Student ID |
 |---|---|
-| `<Member 1>` | `<ID>` |
-| `<Member 2>` | `<ID>` |
-| `<Member 3>` | `<ID>` |
+| `Jordan Lyall ` | `106594525` |
+| `Masum Musfiq` | `106230751` |
+| `Davit Ou` | `106224754` |
+| `Sokun Sor` | `106213341` |
 
 Built with Python, scikit-learn, Hugging Face Transformers, and Streamlit.
